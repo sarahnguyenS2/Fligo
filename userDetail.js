@@ -6,7 +6,7 @@ const userDetailsShema = new mongoose.Schema(
     lname: String,
     fname: String,
     DOB: Date,
-    email: String,
+    email: {type: String, unique: true},
     passportNo: Number,
     password: String,
   },

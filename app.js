@@ -26,9 +26,9 @@ app.post("/register", async (req, res) => {
   const { username, lname, fname, DOB, email, passportNo, password } = req.body;
   const encryptedPassword = await bcrypt.hash(password, 10)
   try {
-    const oldUser = User.findOne({email})
+    const oldUser = await User.findOne({email})
     if(oldUser) {
-        res.send({error: "User is existed!"})
+        return res.json({error: "User has been existed!"})
     }
     await User.create({
       username,
