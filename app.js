@@ -57,6 +57,19 @@ app.post("/register", async (req, res) => {
   }
 });
 
+// API check email has been registered
+app.post("/check-email", async (req, res) => {
+  const { email } = req.body;
+  try {
+    const oldUser = await User.findOne({ email });
+    if (oldUser) {
+      return res.json({ status: "failed" });
+    }
+    res.json({ status: "success" });
+  } catch (error) {
+    res.send(error);
+  }
+})
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
