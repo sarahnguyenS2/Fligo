@@ -22,8 +22,8 @@ mongoose
   })
   .catch((e) => console.log(e));
 
-require("./userDetail");
-
+  // User Data
+require("./UserModel");
 const User = mongoose.model("UserInfo");
 
 app.post("/register", async (req, res) => {
@@ -58,21 +58,16 @@ app.post("/register", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-  const { contact, password } = req.body;
+  const { username, password } = req.body;
 
-  let user;
-  if (contact.includes("@")) {
-    user = await User.findOne({ email: contact });
-  } else {
-    user = await User.findOne({ phoneNo: contact });
-  }
+  const user = await User.findOne({username})
 
   if (!user) {
     return res.json({ error: "User NOT found!" });
   }
 
   if (await bcrypt.compare(password, user.password)) {
-    const token = jwt.sign({email: user.email}, JWT_SECRET, {
+    const token = jwt.sign({username: user.username}, JWT_SECRET, {
       expiresIn: "15m",
     });
     if (res.status(201)) {
@@ -98,8 +93,8 @@ app.post("/userData", async (req, res) => {
       return res.send({ status: "error", data: "Token expired" });
     }
 
-    const useremail = user.email;
-    User.findOne({ email: useremail })
+    const username = user.username;
+    User.findOne({ username: username })
       .then((data) => {
         res.send({ status: "Ok", data: data });
       })
@@ -109,8 +104,11 @@ app.post("/userData", async (req, res) => {
   } catch (error) {console.log(e)}
 });
 
+// Flight Data
+app.get("/getAllFlight", async (req, res) => {
+
+})
+
 app.listen(8000, () => {
   console.log("Server started");
 });
-
-// module.exports = app;
