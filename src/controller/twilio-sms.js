@@ -16,7 +16,7 @@ const sendOtpSms = async (req, res) => {
     // .then(verification => console.log("Send: ",verification.status));;
     res
       .status(200)
-      .send(`OTP send successfully!: ${JSON.stringify(otpResponse)}`);
+      .send(otpResponse);
   } catch (error) {
     res
       .status(error?.status || 400)
@@ -36,7 +36,7 @@ const verifyOtpSms = async (req, res) => {
     // .then(verification_check => console.log("verify: ", verification_check.status));;
     res
       .status(200)
-      .send(`OTP verified successfully!: ${JSON.stringify(verifiedResponse)}`);
+      .send(verifiedResponse);
   } catch (error) {
     res
       .status(error?.status || 400)

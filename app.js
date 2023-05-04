@@ -122,8 +122,8 @@ app.post("/userData", async (req, res) => {
   }
 });
 
-app.post("/reset-password", async (req, res) => {
-  const { contact, newPassword } = req.body;
+app.patch("/reset-password", async (req, res) => {
+  const { contact, password } = req.body;
 
   try {
     const user = await User.findOne({
@@ -134,7 +134,7 @@ app.post("/reset-password", async (req, res) => {
       return res.json({ error: "User NOT found!" });
     }
 
-    const encryptedPassword = await bcrypt.hash(newPassword, 10);
+    const encryptedPassword = await bcrypt.hash(password, 10);
     user.password = encryptedPassword;
     await user.save();
 
