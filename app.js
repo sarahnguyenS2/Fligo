@@ -187,6 +187,12 @@ app.post("/flight", async (req, res) => {
   }
 });
 
+app.get("/logout", (req, res) => {
+  // clear the token from the client side
+  res.clearCookie("token");
+  res.send({ status: "Ok", data: "Logged out successfully!" });
+});
+
 // Flight Data
 app.get("/flights", async (req, res) => {
   const { departure, arrival, date } = req.query;
