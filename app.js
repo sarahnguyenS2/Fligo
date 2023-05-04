@@ -117,6 +117,12 @@ app.post("/userData", async (req, res) => {
   } catch (error) {console.log(e)}
 });
 
+app.get("/logout", (req, res) => {
+  // clear the token from the client side
+  res.clearCookie("token");
+  res.send({ status: "Ok", data: "Logged out successfully!" });
+});
+
 // Flight Data
 app.get("/getAllFlight", async (req, res) => {
 
