@@ -226,5 +226,9 @@ app.listen(8000, () => {
 });
 
 app.post("/book-seat", async (req, res) => {
-    
+    try {
+      
+    } catch (error) {
+      
+    }
 })
