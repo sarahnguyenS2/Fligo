@@ -1,4 +1,4 @@
-require('dotenv').config();
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
@@ -84,7 +84,7 @@ app.post("/login", async (req, res) => {
 
   if (await bcrypt.compare(password, user.password)) {
     const token = jwt.sign({ username: user.username }, JWT_SECRET, {
-      expiresIn: "15m",
+      expiresIn: "30m",
     });
     if (res.status(201)) {
       return res.json({ status: "Ok", data: token });
@@ -122,23 +122,29 @@ app.post("/userData", async (req, res) => {
   }
 });
 
-app.patch("/reset-password", async (req, res) => {
-  const { contact, password } = req.body;
+app.post("/reset-password", async (req, res) => {
+  const { password } = req.body;
+  let contact = req.body.contact;
 
+  // if (!contact.includes("@")) {
+  //   contact = contact.slice(1);
+  // }
+  contact.trim().startsWith("0") ? contact.trim().substring(1) : contact.trim()
+  // console.log(contact, password);
   try {
     const user = await User.findOne({
       $or: [{ email: contact }, { phoneNo: contact }],
     });
-
+    console.log(user);
     if (!user) {
-      return res.json({ error: "User NOT found!" });
+      return res.status(400).json({ error: "User NOT found!" });
     }
 
     const encryptedPassword = await bcrypt.hash(password, 10);
     user.password = encryptedPassword;
     await user.save();
 
-    return res.json({ status: "Ok", message: "Password reset successfully!" });
+    return res.status(200).json({ status: "Ok", message: "Password reset successfully!" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error!" });
@@ -218,3 +224,7 @@ app.get("/flights", async (req, res) => {
 app.listen(8000, () => {
   console.log("Server started");
 });
+
+app.post("/book-seat", async (req, res) => {
+    
+})
