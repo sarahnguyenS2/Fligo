@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const ticketSchema = new mongoose.Schema({
     username: { type: String, default: null },
     seat: { type: String, default: null },
-    status: { type: String, default: null },
+    status: { type: String, default: "pending" },
     firstname: { type: String, default: null },
     lastname: { type: String, default: null },
     dateOfBirth: { type: Date, default: null },
@@ -12,12 +12,14 @@ const ticketSchema = new mongoose.Schema({
     expiryDate: { type: Date, default: null },
     title: { type: String, default: null },
     bookTime: { type: Date, default: Date.now },
-    nationality: { type: String, default: null }
+    nationality: { type: String, default: null },
+    reservationCode: {type: String},
+    paymentBill: {type: Number}
   });
 
 const flightDetailSchema = new mongoose.Schema(
     {
-        flight_number: String,
+        flight_number: {type: String, unique: true},
         airline: String,
         img: String,
         departure: String,
@@ -36,4 +38,6 @@ const flightDetailSchema = new mongoose.Schema(
     }
 )
 
+
 mongoose.model("Flight", flightDetailSchema);
+mongoose.model("Ticket", ticketSchema);

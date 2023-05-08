@@ -84,7 +84,7 @@ app.post("/login", async (req, res) => {
 
   if (await bcrypt.compare(password, user.password)) {
     const token = jwt.sign({ username: user.username }, JWT_SECRET, {
-      expiresIn: "30m",
+      expiresIn: "1h",
     });
     if (res.status(201)) {
       return res.json({ status: "Ok", data: token });
@@ -129,7 +129,7 @@ app.post("/reset-password", async (req, res) => {
   // if (!contact.includes("@")) {
   //   contact = contact.slice(1);
   // }
-  contact.trim().startsWith("0") ? contact.trim().substring(1) : contact.trim()
+  contact.trim().startsWith("0") ? contact.trim().substring(1) : contact.trim();
   // console.log(contact, password);
   try {
     const user = await User.findOne({
@@ -144,7 +144,9 @@ app.post("/reset-password", async (req, res) => {
     user.password = encryptedPassword;
     await user.save();
 
-    return res.status(200).json({ status: "Ok", message: "Password reset successfully!" });
+    return res
+      .status(200)
+      .json({ status: "Ok", message: "Password reset successfully!" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error!" });
@@ -153,6 +155,8 @@ app.post("/reset-password", async (req, res) => {
 
 require("./src/models/FlightModel");
 const Flight = mongoose.model("Flight");
+const Ticket = mongoose.model("Ticket");
+
 app.post("/flight", async (req, res) => {
   const {
     flight_number,
@@ -202,7 +206,7 @@ app.get("/logout", (req, res) => {
 // Flight Data
 app.get("/flights", async (req, res) => {
   const { departure, arrival, date } = req.query;
-
+  // console.log(req.query);
   try {
     const flights = await Flight.find({
       departure,
@@ -221,14 +225,146 @@ app.get("/flights", async (req, res) => {
   }
 });
 
+app.post("/book-seat", async (req, res) => {
+  const { flight_number, username, seat } = req.body;
+  // console.log(req.body);
+  try {
+    // console.log(flight_number);
+    // console.log(seat);
+    const flight = await Flight.findOne({ flight_number });
+    if (!flight) {
+      return res.status(404).json({ error: "Flight NOT found" });
+    }
+    const selectedTicket = flight.tickets.find((obj) => obj.seat === seat);
+    const index = flight.tickets.findIndex((obj) => obj.seat === seat);
+    // console.log(!selectedTicket);
+    if (selectedTicket) {
+      if (selectedTicket.status === "approved") {
+        return res.status(400).json({ error: "Seat is not available" });
+      }
+      const diffInMins = Math.floor(
+        Math.abs(Date.now() - selectedTicket.bookTime) / (1000 * 60)
+      );
+      if (diffInMins <= 15) {
+        return res.status(400).json({ error: "Seat is not available" });
+      } else {
+        flight.tickets[index].username = username;
+        await flight.save();
+        return res.json({ message: "Ticket booked successfully" });
+      }
+    }
+    const ticket = { username, seat };
+    flight.tickets.push(ticket);
+    await flight.save();
+
+    res.json({ message: "Ticket booked successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.patch("/book-seat", async (req, res) => {
+  const {
+    flight_number,
+    seat,
+    firstname,
+    lastname,
+    dateOfBirth,
+    passport,
+    expiryDate,
+    title,
+    nationality,
+  } = req.body;
+  // console.log(req.body);
+  const flight = await Flight.findOne({ flight_number });
+  if (!flight) {
+    return res.status(404).json({ error: "Flight NOT found" });
+  }
+  const selectedTicketIndex = flight.tickets.findIndex(
+    (obj) => obj.seat === seat
+  );
+  if (selectedTicketIndex === -1) {
+    return res.status(404).json({ error: "Ticket NOT found" });
+  }
+
+  const generateReservationCode = () => {
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "";
+    for (let i = 0; i < 8; i++) {
+      code += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return code;
+  };
+
+  // console.log(selectedTicketIndex);
+  flight.tickets[selectedTicketIndex].firstname = firstname;
+  flight.tickets[selectedTicketIndex].lastname = lastname;
+  flight.tickets[selectedTicketIndex].status = "approved";
+  flight.tickets[selectedTicketIndex].dateOfBirth = dateOfBirth;
+  flight.tickets[selectedTicketIndex].passport = passport;
+  flight.tickets[selectedTicketIndex].expiryDate = expiryDate;
+  flight.tickets[selectedTicketIndex].title = title;
+  flight.tickets[selectedTicketIndex].nationality = nationality;
+  flight.tickets[selectedTicketIndex].reservationCode =
+    generateReservationCode();
+  flight.tickets[selectedTicketIndex].paymentBill = 
+  await flight.save();
+
+  res.json({ message: "Ticket booked successfully" });
+  try {
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/flights/:flightNumber/tickets", async (req, res) => {
+  try {
+    const { flightNumber } = req.params;
+
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const flight = await Flight.findOne({ flight_number: flightNumber });
+
+    if (!flight) {
+      return res.status(404).json({ message: "Flight not found" });
+    }
+
+    const filteredTickets = flight.tickets.filter((ticket) => {
+      return (
+        ticket.status === "approved" ||
+        (ticket.status === "pending" && ticket.bookTime > fifteenMinutesAgo)
+      );
+    });
+    // console.log(filteredTickets);
+    res.json(filteredTickets);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.get("/tickets/:username", async (req, res) => {
+  try {
+    const { username } = req.params;
+    // console.log(username);
+    const flights = await Flight.find({ "tickets.username": username });
+
+    // const results = flights.map((flight) => ({
+    //   tickets: flight.tickets.filter((ticket) => ticket.username === username),
+    // }));
+    const tickets = flights.reduce((acc, flight) => {
+      const flightTickets = flight.tickets.filter((ticket) => ticket.username === username);
+      return [...acc, ...flightTickets];
+    }, []);
+
+    res.status(200).json(tickets);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 app.listen(8000, () => {
   console.log("Server started");
 });
-
-app.post("/book-seat", async (req, res) => {
-    try {
-      
-    } catch (error) {
-      
-    }
-})
