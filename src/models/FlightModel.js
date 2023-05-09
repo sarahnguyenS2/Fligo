@@ -14,7 +14,8 @@ const ticketSchema = new mongoose.Schema({
     bookTime: { type: Date, default: Date.now },
     nationality: { type: String, default: null },
     reservationCode: {type: String},
-    paymentBill: {type: Number}
+    paymentBill: {type: Number, default: null},
+    airline: {type: String, default: null}
   });
 
 const flightDetailSchema = new mongoose.Schema(

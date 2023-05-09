@@ -226,7 +226,7 @@ app.get("/flights", async (req, res) => {
 });
 
 app.post("/book-seat", async (req, res) => {
-  const { flight_number, username, seat } = req.body;
+  const { flight_number, username, seat, airline } = req.body;
   // console.log(req.body);
   try {
     // console.log(flight_number);
@@ -253,7 +253,7 @@ app.post("/book-seat", async (req, res) => {
         return res.json({ message: "Ticket booked successfully" });
       }
     }
-    const ticket = { username, seat };
+    const ticket = { username, seat, airline };
     flight.tickets.push(ticket);
     await flight.save();
 
@@ -275,6 +275,7 @@ app.patch("/book-seat", async (req, res) => {
     expiryDate,
     title,
     nationality,
+    paymentBill,
   } = req.body;
   // console.log(req.body);
   const flight = await Flight.findOne({ flight_number });
@@ -308,11 +309,11 @@ app.patch("/book-seat", async (req, res) => {
   flight.tickets[selectedTicketIndex].nationality = nationality;
   flight.tickets[selectedTicketIndex].reservationCode =
     generateReservationCode();
-  flight.tickets[selectedTicketIndex].paymentBill = 
-  await flight.save();
+  flight.tickets[selectedTicketIndex].paymentBill = paymentBill;
 
-  res.json({ message: "Ticket booked successfully" });
   try {
+    await flight.save();
+    res.json({ message: "Ticket booked successfully" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
@@ -347,18 +348,30 @@ app.get("/flights/:flightNumber/tickets", async (req, res) => {
 app.get("/tickets/:username", async (req, res) => {
   try {
     const { username } = req.params;
-    // console.log(username);
     const flights = await Flight.find({ "tickets.username": username });
-
-    // const results = flights.map((flight) => ({
-    //   tickets: flight.tickets.filter((ticket) => ticket.username === username),
-    // }));
     const tickets = flights.reduce((acc, flight) => {
-      const flightTickets = flight.tickets.filter((ticket) => ticket.username === username);
+      const flightTickets = flight.tickets.filter(
+        (ticket) => ticket.username === username && ticket.status === "approved"
+      );
       return [...acc, ...flightTickets];
     }, []);
 
     res.status(200).json(tickets);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/details", async (req, res) => {
+  const { username, bookTime } = req.query
+  try {
+    const flights = await Flight.find({ "tickets.username": username, "tickets.bookTime": bookTime });
+    const tickets = flights.reduce((acc, flight) => {
+      const flightTickets = flight.tickets.filter((ticket) => ticket.username === username && ticket.bookTime.toISOString() === bookedTime);
+      return [...acc, ...flightTickets];
+    }, []);
+    res.json(tickets)
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
