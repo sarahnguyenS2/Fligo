@@ -9,8 +9,7 @@ const twilioRouter = require("./src/routes/otp");
 
 app.use(express.json());
 app.use(cors({
-  origin: '*',
-  credentials: true
+  origin: 'https://fligo-capstone.vercel.app',
 }));
 app.use("/otp/", twilioRouter);
 
