@@ -8,13 +8,16 @@ const jwt = require("jsonwebtoken");
 const twilioRouter = require("./src/routes/otp");
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  credentials: true
+}));
 app.use("/otp/", twilioRouter);
 
 const JWT_SECRET =
   "dasncajsidjaiocosjidjasiiha()dansnaijishahhcashdiashiasda?[]cdjsijoerwkncskjd";
 const mongoUrl =
-  "mongodb+srv://thanhhao:matkhau@cluster0.2qjoujj.mongodb.net/?retryWrites=true&w=majority";
+  "mongodb+srv://thanhhao:matkhau@cluster0.2qjoujj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 mongoose
   .connect(mongoUrl, {
